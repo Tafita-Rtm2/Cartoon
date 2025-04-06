@@ -1,73 +1,75 @@
 const express = require('express');
 const multer = require('multer');
-const fetch = require('node-fetch');
+const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
-const dotenv = require('dotenv');
-dotenv.config();
+const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Token directement dans le code (tu peux le mettre ici si `.env` ne fonctionne pas)
+const REPLICATE_API_TOKEN = 'r8_1igH7mGXtaBilChHzgGW2tUqdkU4Ypg2JLrAn';
+
+app.use(cors());
 app.use(express.static('public'));
 
-const upload = multer({ dest: 'uploads/' });
+// Configuration du stockage temporaire pour les images
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    const ext = path.extname(file.originalname);
+    cb(null, Date.now() + ext);
+  }
+});
+const upload = multer({ storage });
 
-const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
-const replicateHeaders = {
-  Authorization: `Token ${REPLICATE_API_TOKEN}`,
-  'Content-Type': 'application/json',
+// Ghibli = model anime-style / Toon = model de Toongineer
+const models = {
+  ghibli: 'fofr/ghibli-diffusion',
+  toon: 'tencentarc/cartoon-gan'
 };
 
-const MODELS = {
-  animegan: 'tencentarc/animeganv2:6f552bd4ec9137ec7d0f93e2a7df1e7f37233521e4c711c3ed44b24737906c6c',
-  toongineer: 'stevenje/toongineer-cartoonizer:fc026f279ed5f127cda07da0cc7e1b54d1b40b216a4e2079952f76f1f3c6b30f',
-};
+// API POST : transforme l'image
+app.post('/api/transform/:style', upload.single('image'), async (req, res) => {
+  const style = req.params.style;
+  const model = models[style];
 
-app.post('/transform/:model', upload.single('image'), async (req, res) => {
-  const model = req.params.model;
-  const modelVersion = MODELS[model];
-  if (!modelVersion) return res.status(400).send('Modèle invalide.');
-
-  const filePath = path.join(__dirname, req.file.path);
-  const image = fs.readFileSync(filePath);
-  const imageBase64 = image.toString('base64');
-  const imageUrl = `data:image/jpeg;base64,${imageBase64}`;
+  if (!model) return res.status(400).json({ error: 'Style non supporté' });
 
   try {
-    const response = await fetch('https://api.replicate.com/v1/predictions', {
-      method: 'POST',
-      headers: replicateHeaders,
-      body: JSON.stringify({
-        version: modelVersion,
-        input: { image: imageUrl },
-      }),
-    });
+    const imageData = fs.readFileSync(req.file.path, { encoding: 'base64' });
+    const input = {
+      image: `data:image/jpeg;base64,${imageData}`
+    };
 
-    const prediction = await response.json();
-    if (prediction?.urls?.get) {
-      let output;
-      while (!output) {
-        const poll = await fetch(prediction.urls.get, { headers: replicateHeaders });
-        const result = await poll.json();
-        if (result.status === 'succeeded') {
-          output = result.output;
-        } else if (result.status === 'failed') {
-          throw new Error('Erreur traitement IA');
-        } else {
-          await new Promise(r => setTimeout(r, 1500));
+    const response = await axios.post(
+      `https://api.replicate.com/v1/predictions`,
+      {
+        version: '', // facultatif, on prend par défaut
+        input: input,
+        model: model
+      },
+      {
+        headers: {
+          Authorization: `Token ${REPLICATE_API_TOKEN}`,
+          'Content-Type': 'application/json'
         }
       }
+    );
 
-      res.json({ image: output });
-    } else {
-      res.status(500).send('Erreur lors du démarrage de la prédiction');
-    }
-  } catch (e) {
-    console.error(e);
-    res.status(500).send('Erreur de traitement');
+    const output = response.data?.output;
+    res.json({ output });
+  } catch (err) {
+    console.error(err.response?.data || err.message);
+    res.status(500).json({ error: 'Erreur lors de la transformation' });
   } finally {
-    fs.unlinkSync(filePath);
+    fs.unlink(req.file.path, () => {});
   }
 });
 
-app.listen(PORT, () => console.log(`Serveur sur http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Serveur démarré sur http://localhost:${PORT}`);
+});
