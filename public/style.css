@@ -1,0 +1,27 @@
+body {
+  font-family: sans-serif;
+  text-align: center;
+  padding: 20px;
+  background: #f0f0f0;
+}
+h1 {
+  color: #2d3436;
+}
+input[type="file"] {
+  margin: 15px 0;
+}
+.buttons button {
+  margin: 5px;
+  padding: 10px 20px;
+  border: none;
+  background: #0984e3;
+  color: white;
+  cursor: pointer;
+  border-radius: 5px;
+}
+#result img {
+  margin-top: 20px;
+  max-width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
