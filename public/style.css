@@ -4,15 +4,12 @@ body {
   padding: 20px;
   background: #f9f9f9;
 }
-
 h1 {
   color: #333;
 }
-
 input[type="file"] {
   margin: 15px 0;
 }
-
 .buttons button {
   margin: 5px;
   padding: 10px 20px;
@@ -22,13 +19,20 @@ input[type="file"] {
   cursor: pointer;
   border-radius: 4px;
 }
-
 #result {
   margin-top: 20px;
 }
-
 #result img {
   max-width: 100%;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.download-btn {
+  margin-top: 10px;
+  display: inline-block;
+  padding: 8px 16px;
+  background: #00b894;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
 }
