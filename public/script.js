@@ -5,16 +5,24 @@ async function transform(model) {
   resultDiv.innerHTML = 'Transformation en cours...';
 
   try {
-    const res = await fetch(`/transform/${model}`, {
+    const response = await fetch(`/transform/${model}`, {
       method: 'POST',
       body: formData
     });
-
-    if (!res.ok) {
+    
+    if (!response.ok) {
       throw new Error('Erreur lors de la transformation.');
     }
-    const data = await res.json();
-    resultDiv.innerHTML = `<img src="${data.image}" alt="Image transformée">`;
+    
+    const data = await response.json();
+    const imageUrl = data.image;
+    
+    // Afficher l'image et ajouter un bouton de téléchargement
+    resultDiv.innerHTML = `
+      <img src="${imageUrl}" alt="Image transformée">
+      <br>
+      <a href="${imageUrl}" download="transformed.jpg" class="download-btn">Télécharger l'image</a>
+    `;
   } catch (error) {
     resultDiv.innerHTML = `<p style="color: red;">${error.message}</p>`;
   }
