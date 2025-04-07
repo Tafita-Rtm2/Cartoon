@@ -1,25 +1,35 @@
 const express = require('express');
 const multer = require('multer');
 const axios = require('axios');
-const fs = require('fs');
 const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Servir les fichiers statiques du dossier public
+// Sert les fichiers statiques dans "public" et "uploads"
 app.use(express.static('public'));
+app.use('/uploads', express.static('uploads'));
 
-// Configuration de multer pour stocker temporairement les images dans "uploads/"
-const upload = multer({ dest: 'uploads/' });
+// Utilise multer avec diskStorage pour stocker les images localement dans "uploads/"
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const filename = `${Date.now()}-${Math.round(Math.random() * 1E9)}${ext}`;
+    cb(null, filename);
+  }
+});
+const upload = multer({ storage });
 
-// Versions des modèles sur Replicate
+// Définition des modèles Replicate
 const MODELS = {
   animegan: 'tencentarc/animeganv2:6f552bd4ec9137ec7d0f93e2a7df1e7f37233521e4c711c3ed44b24737906c6c',
   toongineer: 'stevenje/toongineer-cartoonizer:fc026f279ed5f127cda07da0cc7e1b54d1b40b216a4e2079952f76f1f3c6b30f'
 };
 
-// Ton token Replicate intégré directement ici
+// Ton token Replicate
 const REPLICATE_API_TOKEN = 'r8_1igH7mGXtaBilChHzgGW2tUqdkU4Ypg2JLrAn';
 
 app.post('/transform/:model', upload.single('image'), async (req, res) => {
@@ -29,19 +39,16 @@ app.post('/transform/:model', upload.single('image'), async (req, res) => {
     return res.status(400).json({ error: 'Modèle invalide.' });
   }
 
-  const filePath = path.join(__dirname, req.file.path);
-  try {
-    // Lire l'image et la convertir en base64
-    const imageBuffer = fs.readFileSync(filePath);
-    const base64Image = imageBuffer.toString('base64');
-    const dataUrl = `data:image/jpeg;base64,${base64Image}`;
+  // Construit l'URL publique de l'image uploadée
+  const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
 
-    // Lancer la prédiction via l'API Replicate
+  try {
+    // Démarre la prédiction en passant l'URL de l'image au lieu d'un base64
     const predictionResponse = await axios.post(
       'https://api.replicate.com/v1/predictions',
       {
         version: modelVersion,
-        input: { image: dataUrl }
+        input: { image: fileUrl }
       },
       {
         headers: {
@@ -56,7 +63,7 @@ app.post('/transform/:model', upload.single('image'), async (req, res) => {
       return res.status(500).json({ error: 'Erreur lors du lancement de la prédiction.' });
     }
 
-    // Polling jusqu'à ce que la prédiction soit "succeeded"
+    // Effectue le polling jusqu'à ce que la prédiction soit terminée
     const pollUrl = prediction.urls.get;
     let output;
     while (true) {
@@ -74,17 +81,12 @@ app.post('/transform/:model', upload.single('image'), async (req, res) => {
       await new Promise(resolve => setTimeout(resolve, 1500));
     }
 
-    // Si output est un tableau, prendre le premier élément
+    // Si l'output est un tableau, on prend le premier élément
     const imageUrl = Array.isArray(output) ? output[0] : output;
     return res.json({ image: imageUrl });
-  } catch (err) {
-    console.error('Erreur lors de la transformation:', err.response ? err.response.data : err.message);
+  } catch (error) {
+    console.error('Erreur lors du traitement:', error.response ? error.response.data : error.message);
     return res.status(500).json({ error: 'Erreur lors du traitement de l’image.' });
-  } finally {
-    // Supprimer le fichier uploadé
-    fs.unlink(filePath, err => {
-      if (err) console.error('Erreur suppression fichier:', err);
-    });
   }
 });
 
