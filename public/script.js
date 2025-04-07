@@ -1,17 +1,21 @@
 async function transform(model) {
   const form = document.getElementById('uploadForm');
   const formData = new FormData(form);
-  document.getElementById('result').innerHTML = 'Transformation en cours...';
+  const resultDiv = document.getElementById('result');
+  resultDiv.innerHTML = 'Transformation en cours...';
 
-  const res = await fetch(`/transform/${model}`, {
-    method: 'POST',
-    body: formData,
-  });
+  try {
+    const res = await fetch(`/transform/${model}`, {
+      method: 'POST',
+      body: formData
+    });
 
-  if (res.ok) {
+    if (!res.ok) {
+      throw new Error('Erreur lors de la transformation.');
+    }
     const data = await res.json();
-    document.getElementById('result').innerHTML = `<img src="${data.image}" alt="Image stylisée">`;
-  } else {
-    document.getElementById('result').innerHTML = 'Erreur lors de la transformation.';
+    resultDiv.innerHTML = `<img src="${data.image}" alt="Image transformée">`;
+  } catch (error) {
+    resultDiv.innerHTML = `<p style="color: red;">${error.message}</p>`;
   }
 }
