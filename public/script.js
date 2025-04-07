@@ -17,7 +17,7 @@ async function transform(model) {
     const data = await response.json();
     const imageUrl = data.image;
     
-    // Afficher l'image et ajouter un bouton de téléchargement
+    // Affiche l'image transformée et ajoute un bouton de téléchargement
     resultDiv.innerHTML = `
       <img src="${imageUrl}" alt="Image transformée">
       <br>
