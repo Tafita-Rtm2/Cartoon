@@ -1,13 +1,18 @@
 {
-  "name": "ghibli-image-transformer",
+  "name": "tonsite-chatgpt-clone",
   "version": "1.0.0",
+  "description": "Site cloné propre de gpt.tiptopuni.com sans footer ni mentions",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "capture": "node puppeteer.js"
   },
+  "author": "rtm-tafitaniaina",
+  "license": "MIT",
   "dependencies": {
-    "axios": "^1.4.0",
+    "axios": "^1.7.2",
     "express": "^4.18.2",
-    "multer": "^1.4.5-lts.1"
+    "express-http-proxy": "^1.6.2",
+    "puppeteer": "^21.3.8"
   }
 }
