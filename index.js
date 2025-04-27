@@ -9,7 +9,7 @@ async function getPageContent(url) {
   const browser = await puppeteer.launch({
     args: chrome.args,
     defaultViewport: chrome.defaultViewport,
-    executablePath: await chrome.executablePath || '/usr/bin/chromium-browser',
+    executablePath: await chrome.executablePath,
     headless: chrome.headless,
     ignoreHTTPSErrors: true,
   });
