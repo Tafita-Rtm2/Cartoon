@@ -6,8 +6,15 @@ const PORT = process.env.PORT || 3000;
 app.get('/', async (req, res) => {
   try {
     const browser = await puppeteer.launch({
-      headless: "new",
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      headless: true,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable', 
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--single-process'
+      ]
     });
     const page = await browser.newPage();
     await page.goto('https://gpt.tiptopuni.com/#/chat', {
@@ -15,20 +22,15 @@ app.get('/', async (req, res) => {
       timeout: 0
     });
 
-    // Ici : Suppression automatique des textes et éléments gênants
     await page.evaluate(() => {
-      // Supprimer tous les éléments contenant certains mots
       const wordsToRemove = ['tiptopuni', 'github', 'créateur', 'contact', 'about', 'terms', 'conditions', 'privacy'];
       const allElements = document.querySelectorAll('*');
-
       allElements.forEach(el => {
         const text = (el.innerText || "").toLowerCase();
         if (wordsToRemove.some(word => text.includes(word))) {
           el.remove();
         }
       });
-
-      // Supprimer le footer (s'il existe)
       const footer = document.querySelector('footer');
       if (footer) footer.remove();
     });
