@@ -1,5 +1,5 @@
 {
-  "name": "tonsite-chatgpt-clone",
+  "name": "chatgpt-clone",
   "version": "1.0.0",
   "description": "Site cloné propre de gpt.tiptopuni.com sans footer ni mentions",
   "main": "server.js",
