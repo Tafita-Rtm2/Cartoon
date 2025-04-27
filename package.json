@@ -1,14 +1,13 @@
 {
-  "name": "mon-site-gpt",
+  "name": "rtm",
   "version": "1.0.0",
-  "description": "Proxy + Puppeteer vers gpt.tiptopuni.com",
-  "main": "server.js",
+  "description": "Un clone caché de gpt.tiptopuni.com sans crédits visibles",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node index.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "express-http-proxy": "^1.6.3",
-    "puppeteer": "^21.11.0"
+    "puppeteer": "^21.3.8"
   }
 }
