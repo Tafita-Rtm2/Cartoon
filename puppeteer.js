@@ -1,33 +1,27 @@
 const puppeteer = require('puppeteer');
-const fs = require('fs');
-const path = require('path');
 
-(async () => {
-  const browser = await puppeteer.launch({ headless: true });
+async function capturePage() {
+  const browser = await puppeteer.launch({
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
+
   const page = await browser.newPage();
-  
-  await page.goto('https://gpt.tiptopuni.com/#/chat', { waitUntil: 'networkidle2' });
-
-  // Supprimer les footers / liens créateurs
-  await page.evaluate(() => {
-    const unwantedElements = [
-      document.querySelector('footer'),
-      ...document.querySelectorAll('a[href*="github.com"]'),
-      ...document.querySelectorAll('a[href*="tiptopuni.com"]')
-    ];
-    unwantedElements.forEach(el => el && el.remove());
+  await page.goto('https://gpt.tiptopuni.com/#/chat', {
+    waitUntil: 'networkidle2'
   });
 
-  // Modifier titre du site
+  // Tu peux ici cacher des éléments gênants, par exemple:
   await page.evaluate(() => {
-    document.title = "Mon GPT-4o Privé";
+    const footer = document.querySelector('footer');
+    if (footer) footer.style.display = 'none';
+
+    const links = document.querySelectorAll('a');
+    links.forEach(link => link.style.display = 'none');
   });
 
-  // Sauvegarder la page propre
-  const content = await page.content();
-  fs.writeFileSync(path.join(__dirname, 'public', 'index.html'), content);
-
+  const html = await page.content();
   await browser.close();
-  console.log('Capture et nettoyage terminés.');
-})();
+  return html;
+}
 
+module.exports = { capturePage };
