@@ -22,22 +22,22 @@ const userSessionCookies = [
     {"name": "__Secure-3PAPISID", "value": "ekVoYAwTWVJasyry/AC_mmhY8O_i_CJ9Xf"},
     {"name": "_gcl_au", "value": "1.1.219111874.1769454158"},
     {"name": "AEC", "value": "AaJma5vqiVU2onYyz5ssWpGcbxNCIK1KOK1Yui8emmTkNoaJgFO1q0AIlyc"},
-    {"name": "_ga_WC57KJ50ZZ", "value": "GS2.1.s1769831526$o2$g0$t1769831535$j51$l0$h0"},
-    {"name": "NID", "value": "528=WamHUpHd4nN1qKPESrmJYGWf9M3AJdwRqbL-PTY1QEDHR1utnkQG_rAq98KV53OM66WpLtRfWEe0hqNxNSJ_53YdXADrynDZU61HAWxdLFwYilzH_zRs4g0fDY4PQ77gPwJtx3R7dRYNlr9cSTpWU55rHKYZhlFc6F7IQc3QjZIVtRxgr8GTl8xQ1XYWZCf4NSP96ggHNawf5qmu7SpxNoabEbz2GhnXpqhUMK5xCy0xOxMh-YgoxXNRxuaARJ5QBCxaxCPs6iHnszLGhEayGZNJcEOaTZrdaalKR6qCrqP9kcxPorGH46BsxVqbe8ncVsuE5SLE2mH0l9GCHuhSILBV8_91iMJUsTGkbdLMrV7QmtcF6NJEkq9YgqdcoIYGAGG7vDOkRV6gxIR795Fd2n0WN-WOUW6wtu8ks9ruc2cxSIsXLpfosP-Rc5dlZDDA6uQkL0OPSEvbYf4WnfvX55p4iH-IsQDB1uo25s6Czge9gLbtQXy9PCJ32hFqM95ZWrIqumCmzN4eHzOwCbTlYYhe1ecro2ach6nBG00mYCoaYj8iey0njILe0By1WEjvX7JPUGOuLtKXQZ2QHJ5oFc9V2Wc3XSZKT01SbeI_ZoIECLtDNUCpsvvqj3g9XqL8N8sRkLOG2u4Nwubb4yQ3r1W2k2Z7Bhrf4O-RSljO8z_dSNTy0Eb29zq3fSfnM7vdOOptlyD3qHI472nW-6pl3bG_-8-K6VLD7hAAefXeT3SeUQ"},
+    {"name": "_ga_WC57KJ50ZZ", "value": "GS2.1.s1769840704$o5$g1$t1769840720$j44$l0$h0"},
+    {"name": "NID", "value": "528=JMERlyo9_TMyO1yct2-0CktoW0ZIlyX1fHW1ruhVAq9am3to6xFmEuxzWGyg2gf8pQjV8-xxr407xdym_IhpbdPZq-bs3AFj-slBJlurtXCEJ4SSlL1wVY21OQiOwwLGFMaaU4JRaGIuRcdn7j0G3hHHYa-_A7ML8_OIsMMIOci5cOuna5tGMdmZ-JoS1SoNz_ex7MqH4FTiX9YO8B80Odyfd7GwrSVViMoYMjcYBUUYBlWLuPN1aiL08txrI4mMOZi9-5nHBraNFiGg8OiNZDUYgXOjkd79j_zhwfo39pXEWglgqeA-lZTGoYVlr_vqTwkiyBd2TXbvNptlFbo6NYsldeLZAZWnNRBVM8EpDRPPPqrtENc4Zlkk0B1ULeE2nfU_F_hL_hwnIS1kORuJF9g1kOKv0eSV9Vnyl7Psp17rIuoDmcWNU9X1fl_X-ivsbQ-PRNpCmoCi5UGvnsex17tH8quBgnhrKikWE0PSiqok5sbkISpFz_wYX4xXc9glZyrtmsVhx6TALzGVKcCQIzPNAjN7rG2DZHzebqy4D9-ABrKHGJucY6WVAHnk367k29_AsDc9vGjnJnupoMiIw1fu1a0dzqiHzfveECbutSdmy2nhEweMX5iM8oVeSCk9uO1kv1N99sAkv21bWeXHeZeZHbclaiH4os7P3OunP2V8DwviAAsaxZmZt2A4nC3J1z1AuctFQVJo5qSI9CcSlzSyr0UzpmyaQvSrCMqzXWo9mQ"},
     {"name": "APISID", "value": "_654tlSVvpyHeE18/ArcQGnCoZ42AV9AE6"},
     {"name": "COMPASS", "value": "gemini-pd=CjwACWuJV93jFYb_b6k1ZbZc5AVi75OXfwVJx6huPFdJgLZgT-iphNSBtyIyTho-2Gurv4U86El7hPmdVFUQ6Jv7ywYaXQAJa4lXgICPRxTCq4WUfmrdWMST4kGs1GRj2AOMTWxzvxGleIpkW4NjMsxRVlRb-TWlRXTaFxWOpfa_RUOOJQM7L12N_u8TbQU5QCMsf3Ue0syU-exWd48W_xCqBCABMAE"},
     {"name": "__Secure-1PAPISID", "value": "ekVoYAwTWVJasyry/AC_mmhY8O_i_CJ9Xf"},
     {"name": "__Secure-3PSID", "value": "g.a0006Aj8jDhx9DwPknH88r5NhjlHoHFkAgK_1f-qrbdFv6e3Xk8bW8Te9gY6q1wp9Rw5-xcqigACgYKAS4SARUSFQHGX2MiYLg-Q9E1v5qoNvH4Z1oVWhoVAUF8yKp7PeVdZO2Il0BrOMuRIUDw0076"},
     {"name": "__Secure-1PSID", "value": "g.a0006Aj8jDhx9DwPknH88r5NhjlHoHFkAgK_1f-qrbdFv6e3Xk8bi1Q34Ox6-M9eWTQokjCvdAACgYKASkSARUSFQHGX2MiGVMhk66jaP5z2lbLDGoLnBoVAUF8yKqqX6whDGiYzScdHB-GgCF50076"},
-    {"name": "__Secure-1PSIDCC", "value": "AKEyXzU6XJ_R0aVMjWbEmuf7PwDM4hi_KtWbWh7nef4hHddKjSWYoGOlj4StV5JO8FgEnVQlJg"},
-    {"name": "__Secure-3PSIDCC", "value": "AKEyXzWbQP1DqImZSfGnqISu7vyCLVKh4A-UpqriAJ8ZlEpWyLMCUY4xyBTyeaxbv0lKBsJS_g"},
+    {"name": "__Secure-1PSIDCC", "value": "AKEyXzXcM9sXu_cW81Fr-hGe2FlWSZE8dueUFjgd7USb6E4QzVpIFYOzOAf5KVc7l2ayN0lYaLY"},
+    {"name": "__Secure-3PSIDCC", "value": "AKEyXzWbqVVQElkNf_RcbN2xExRVZgtdiiYPQIikgP4SNTQtA6_FM62promaTHKKMTkY29lt5as"},
     {"name": "__Secure-BUCKET", "value": "CEI"},
     {"name": "_ga", "value": "GA1.1.221275717.1769454160"},
-    {"name": "_ga_BF8Q35BMLM", "value": "GS2.1.s1769831527$o2$g0$t1769831534$j53$l0$h0"},
+    {"name": "_ga_BF8Q35BMLM", "value": "GS2.1.s1769840706$o4$g1$t1769840720$j46$l0$h0"},
     {"name": "HSID", "value": "A-5Vch2LzEVcONvuJ"},
     {"name": "SEARCH_SAMESITE", "value": "CgQI_58B"},
     {"name": "SID", "value": "g.a0006Aj8jDhx9DwPknH88r5NhjlHoHFkAgK_1f-qrbdFv6e3Xk8bnZkd3Ua4g6vhEZUUjOKupAACgYKAXISARUSFQHGX2MiishkltPPnlcpDZL3ozXgnxoVAUF8yKrCq-JECfM5ySHUAFHJFZs20076"},
-    {"name": "SIDCC", "value": "AKEyXzVSFEMK4fjmn51qGvHdq1TX_7LNeiJeurv_2i08BUAOit9YJIdRIiKkegeTSJ1a3Q7H"},
+    {"name": "SIDCC", "value": "AKEyXzWrn0R7MnRj43rH_F0U2yaGRhLMj5RD4uNntMSP68q214JY2oEderyyHwACsJxvXbZFNA"},
     {"name": "SSID", "value": "AwEZUJ7YUUKjE72a1"}
 ];
 
@@ -62,7 +62,6 @@ async function getGeminiSession() {
             }
         });
         const html = response.data;
-        // Search for AT token in multiple patterns
         let atToken = null;
         const atPatterns = [/"SNlM0e":"([^"]+)"/, /"W97gF":"([^"]+)"/, /"at":"([^"]+)"/];
         for (const pattern of atPatterns) {
@@ -86,7 +85,7 @@ async function getGeminiSession() {
 
 async function askGemini(query, uid, modelName, systemPrompt) {
     const session = await getGeminiSession();
-    if (!session || !session.atToken) throw new Error("Authentication failed. Cookies might be expired.");
+    if (!session || !session.atToken) throw new Error("Session init failed. Check cookies.");
 
     let state = geminiConversations.get(uid) || { conversationId: "", responseId: "", choiceId: "" };
 
@@ -95,28 +94,23 @@ async function askGemini(query, uid, modelName, systemPrompt) {
         refinedQuery = `[System Instruction: ${systemPrompt}]\n\n${query}`;
     }
 
-    if (modelName === "rapide" || modelName === "flash") refinedQuery = `(Using Gemini Rapide) ${refinedQuery}`;
-    else if (modelName === "raisonement") refinedQuery = `(Using Gemini Raisonnement) ${refinedQuery}`;
-    else if (modelName === "pro" || modelName === "3 pro") refinedQuery = `(Using Gemini Pro) ${refinedQuery}`;
+    if (modelName === "rapide" || modelName === "flash") refinedQuery = `(Rapide) ${refinedQuery}`;
+    else if (modelName === "raisonement") refinedQuery = `(Raisonnement) ${refinedQuery}`;
+    else if (modelName === "pro" || modelName === "3 pro") refinedQuery = `(Pro) ${refinedQuery}`;
 
-    // Structure used by modern batchexecute
+    // Simplified but strict payload for batchexecute
     const payload = [
         [refinedQuery, 0, null, null, null, null, []],
         ["en"],
-        [state.conversationId || "", state.responseId || "", state.choiceId || "", null, null, []],
+        [state.conversationId || null, state.responseId || null, state.choiceId || null, null, null, []],
         null, null, null, [1], 0, [], [], 1, 0
     ];
 
-    const rpcids = ["atunS3", "sh9Sbc", "H8S3v"];
+    const rpcids = ["atunS3", "sh9Sbc"];
     let lastError;
 
     for (const rpcid of rpcids) {
-        const fReq = [
-            [
-                [rpcid, JSON.stringify(payload), null, "1"]
-            ]
-        ];
-
+        const fReq = [[ [rpcid, JSON.stringify(payload), null, "generic"] ]];
         const params = new URLSearchParams();
         params.append('f.req', JSON.stringify(fReq));
         params.append('at', session.atToken);
@@ -129,25 +123,26 @@ async function askGemini(query, uid, modelName, systemPrompt) {
                     'Cookie': GEMINI_COOKIE_STR,
                     'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
                     ...BROWSER_HEADERS
-                },
-                timeout: 30000
+                }
             });
 
             const data = response.data;
-            if (data.includes('atunS3') || data.includes('sh9Sbc') || data.includes('H8S3v')) {
-                const lines = data.split('\n');
-                for (const line of lines) {
-                    const match = line.match(/\["w_f\.v",null,".*?","(.*)"\]/);
-                    if (match) {
-                        const jsonStr = JSON.parse(`"${match[1]}"`);
-                        const chatData = JSON.parse(jsonStr);
-                        const responseText = chatData[4][0][1][0];
-                        state.conversationId = chatData[1][0];
-                        state.responseId = chatData[1][1];
-                        state.choiceId = chatData[4][0][0];
-                        geminiConversations.set(uid, state);
-                        return responseText;
-                    }
+            const lines = data.split('\n');
+            for (const line of lines) {
+                if (line.includes(rpcid)) {
+                    try {
+                        const match = line.match(/\["w_f\.v",null,".*?","(.*)"\]/);
+                        if (match) {
+                            const jsonStr = JSON.parse(`"${match[1]}"`);
+                            const chatData = JSON.parse(jsonStr);
+                            const responseText = chatData[4][0][1][0];
+                            state.conversationId = chatData[1][0];
+                            state.responseId = chatData[1][1];
+                            state.choiceId = chatData[4][0][0];
+                            geminiConversations.set(uid, state);
+                            return responseText;
+                        }
+                    } catch (e) {}
                 }
             }
         } catch (e) {
@@ -157,7 +152,7 @@ async function askGemini(query, uid, modelName, systemPrompt) {
         }
     }
 
-    // Final attempt with GetAnswer endpoint if batchexecute fails
+    // Attempt legacy fallback if batchexecute fails
     try {
         const getAnswerUrl = `https://gemini.google.com/_/BardChatUi/data/assistant.lamda.BardFrontendService/GetAnswer?bl=${session.buildLabel}&rt=c`;
         const legacyPayload = [
@@ -180,9 +175,9 @@ async function askGemini(query, uid, modelName, systemPrompt) {
     } catch (e) {}
 
     if (lastError && lastError.response) {
-        throw new Error(`Gemini 400. Try updating your cookies. Response: ${JSON.stringify(lastError.response.data).substring(0, 100)}`);
+        throw new Error(`Gemini 400: ${JSON.stringify(lastError.response.data).substring(0, 200)}`);
     }
-    throw lastError || new Error("Connection failed.");
+    throw lastError || new Error("Gemini request failed.");
 }
 
 // --- API Endpoints ---
@@ -294,6 +289,8 @@ async function handleGemini(req, res) {
         } catch (error) {
             console.error(`Gemini ${m} failed:`, error.message);
             lastError = error;
+            // Clear session on 400 to try fresh next time
+            if (error.message.includes('400')) geminiConversations.delete(uid);
         }
     }
 
