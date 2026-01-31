@@ -16,7 +16,7 @@ const geminiConversations = new Map();
 const gptModels = ["gpt-5", "gpt-5(Azure)"];
 const geminiModels = ["pro", "rapide", "raisonement", "3 pro", "flash"];
 
-// Gemini Session Cookies (User Provided)
+// Gemini Session Cookies (User Provided - Feb 2025)
 const userSessionCookies = [
     {"name": "SAPISID", "value": "ekVoYAwTWVJasyry/AC_mmhY8O_i_CJ9Xf"},
     {"name": "__Secure-3PAPISID", "value": "ekVoYAwTWVJasyry/AC_mmhY8O_i_CJ9Xf"},
@@ -62,19 +62,15 @@ async function getGeminiSession() {
             }
         });
         const html = response.data;
-        let atToken = null;
-        const atPatterns = [/"SNlM0e":"([^"]+)"/, /"W97gF":"([^"]+)"/, /"at":"([^"]+)"/];
-        for (const pattern of atPatterns) {
-            const match = html.match(pattern);
-            if (match) {
-                atToken = match[1];
-                break;
-            }
-        }
 
+        // Comprehensive search for AT token and FSID
+        const atMatch = html.match(/"SNlM0e":"([^"]+)"/) || html.match(/"W97gF":"([^"]+)"/) || html.match(/"at":"([^"]+)"/);
+        const fsidMatch = html.match(/"F96u0b":"([^"]+)"/) || html.match(/"f\.sid":"([^"]+)"/);
         const blMatch = html.match(/"bl":"([^"]+)"/);
+
         return {
-            atToken: atToken,
+            atToken: atMatch ? atMatch[1] : null,
+            fsid: fsidMatch ? fsidMatch[1] : null,
             buildLabel: blMatch ? blMatch[1] : "boq_assistant-bard-web-server_20240501.01_p0"
         };
     } catch (e) {
@@ -85,74 +81,105 @@ async function getGeminiSession() {
 
 async function askGemini(query, uid, modelName, systemPrompt) {
     const session = await getGeminiSession();
-    if (!session || !session.atToken) throw new Error("Session init failed. Check cookies.");
+    if (!session || !session.atToken) throw new Error("Authentication failed. Cookies are likely invalid or expired.");
 
     let state = geminiConversations.get(uid) || { conversationId: "", responseId: "", choiceId: "" };
 
     let refinedQuery = query;
     if (systemPrompt) {
-        refinedQuery = `[System Instruction: ${systemPrompt}]\n\n${query}`;
+        refinedQuery = `[Instructions: ${systemPrompt}]\n\n${query}`;
     }
 
+    // Model hints integrated into the query
     if (modelName === "rapide" || modelName === "flash") refinedQuery = `(Rapide) ${refinedQuery}`;
     else if (modelName === "raisonement") refinedQuery = `(Raisonnement) ${refinedQuery}`;
     else if (modelName === "pro" || modelName === "3 pro") refinedQuery = `(Pro) ${refinedQuery}`;
 
-    // Simplified but strict payload for batchexecute
-    const payload = [
-        [refinedQuery, 0, null, null, null, null, []],
-        ["en"],
-        [state.conversationId || null, state.responseId || null, state.choiceId || null, null, null, []],
-        null, null, null, [1], 0, [], [], 1, 0
+    // Variants of the f.req payload
+    const payloadVariants = [
+        // Variant 1: Modern standard
+        [
+            [refinedQuery, 0, null, null, null, null, []],
+            ["en"],
+            [state.conversationId || "", state.responseId || "", state.choiceId || "", null, null, []],
+            null, null, null, [1], 0, [], [], 1, 0
+        ],
+        // Variant 2: Simplified
+        [
+            [refinedQuery, 0, null, null, null, null, []],
+            ["en"],
+            [state.conversationId || "", state.responseId || "", state.choiceId || ""],
+            null, null, null, [1], 0, [], [], 1, 0
+        ]
     ];
 
     const rpcids = ["atunS3", "sh9Sbc"];
     let lastError;
 
-    for (const rpcid of rpcids) {
-        const fReq = [[ [rpcid, JSON.stringify(payload), null, "generic"] ]];
-        const params = new URLSearchParams();
-        params.append('f.req', JSON.stringify(fReq));
-        params.append('at', session.atToken);
-
-        const url = `https://gemini.google.com/_/BardChatUi/data/batchexecute?rpcids=${rpcid}&bl=${session.buildLabel}&rt=c`;
-
-        try {
-            const response = await axios.post(url, params.toString(), {
-                headers: {
-                    'Cookie': GEMINI_COOKIE_STR,
-                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-                    ...BROWSER_HEADERS
+    const tryVariants = async (isRetry = false) => {
+        for (const rpcid of rpcids) {
+            for (const payloadTemplate of payloadVariants) {
+                const payload = JSON.parse(JSON.stringify(payloadTemplate));
+                if (isRetry) {
+                    payload[2] = ["", "", "", null, null, []]; // Force clean state
                 }
-            });
 
-            const data = response.data;
-            const lines = data.split('\n');
-            for (const line of lines) {
-                if (line.includes(rpcid)) {
-                    try {
-                        const match = line.match(/\["w_f\.v",null,".*?","(.*)"\]/);
-                        if (match) {
-                            const jsonStr = JSON.parse(`"${match[1]}"`);
-                            const chatData = JSON.parse(jsonStr);
-                            const responseText = chatData[4][0][1][0];
-                            state.conversationId = chatData[1][0];
-                            state.responseId = chatData[1][1];
-                            state.choiceId = chatData[4][0][0];
-                            geminiConversations.set(uid, state);
-                            return responseText;
+                const fReq = [[[rpcid, JSON.stringify(payload), null, "generic"]]];
+                const body = `f.req=${encodeURIComponent(JSON.stringify(fReq))}&at=${session.atToken}`;
+
+                let url = `https://gemini.google.com/_/BardChatUi/data/batchexecute?rpcids=${rpcid}&bl=${session.buildLabel}&rt=c`;
+                if (session.fsid) url += `&f.sid=${session.fsid}`;
+
+                try {
+                    const response = await axios.post(url, body, {
+                        headers: {
+                            'Cookie': GEMINI_COOKIE_STR,
+                            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                            ...BROWSER_HEADERS
+                        },
+                        timeout: 20000
+                    });
+
+                    const data = response.data;
+                    if (data.includes(rpcid)) {
+                        const lines = data.split('\n');
+                        for (const line of lines) {
+                            const match = line.match(/\["w_f\.v",null,".*?","(.*)"\]/);
+                            if (match) {
+                                try {
+                                    const jsonStr = JSON.parse(`"${match[1]}"`);
+                                    const chatData = JSON.parse(jsonStr);
+                                    const responseText = chatData[4][0][1][0];
+
+                                    state.conversationId = chatData[1][0];
+                                    state.responseId = chatData[1][1];
+                                    state.choiceId = chatData[4][0][0];
+                                    geminiConversations.set(uid, state);
+
+                                    return responseText;
+                                } catch (e) {}
+                            }
                         }
-                    } catch (e) {}
+                    }
+                } catch (e) {
+                    lastError = e;
+                    if (e.response && e.response.status === 400) continue;
+                    throw e;
                 }
             }
-        } catch (e) {
-            lastError = e;
-            if (e.response && e.response.status === 400) continue;
-            break;
         }
+        return null;
+    };
+
+    let result = await tryVariants(false);
+    if (!result && state.conversationId) {
+        console.log("Request failed with history, retrying fresh...");
+        result = await tryVariants(true);
     }
 
-    // Attempt legacy fallback if batchexecute fails
+    if (result) return result;
+
+    // Final attempt with legacy GetAnswer endpoint
     try {
         const getAnswerUrl = `https://gemini.google.com/_/BardChatUi/data/assistant.lamda.BardFrontendService/GetAnswer?bl=${session.buildLabel}&rt=c`;
         const legacyPayload = [
@@ -172,12 +199,15 @@ async function askGemini(query, uid, modelName, systemPrompt) {
             const data = JSON.parse(JSON.parse(`"${match[1]}"`));
             return data[4][0][1][0];
         }
-    } catch (e) {}
+    } catch (e) {
+        lastError = e;
+    }
 
     if (lastError && lastError.response) {
-        throw new Error(`Gemini 400: ${JSON.stringify(lastError.response.data).substring(0, 200)}`);
+        geminiConversations.delete(uid);
+        throw new Error(`Gemini Error 400: structural rejection. Cookies are valid but format is blocked. Response: ${String(lastError.response.data).substring(0, 100)}`);
     }
-    throw lastError || new Error("Gemini request failed.");
+    throw lastError || new Error("Gemini response parsing failed.");
 }
 
 // --- API Endpoints ---
@@ -289,8 +319,6 @@ async function handleGemini(req, res) {
         } catch (error) {
             console.error(`Gemini ${m} failed:`, error.message);
             lastError = error;
-            // Clear session on 400 to try fresh next time
-            if (error.message.includes('400')) geminiConversations.delete(uid);
         }
     }
 
