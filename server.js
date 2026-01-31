@@ -14,7 +14,7 @@ const geminiConversations = new Map();
 
 // Models
 const gptModels = ["gpt-5", "gpt-5(Azure)"];
-const geminiModels = ["3 pro", "flash", "raisonement"];
+const geminiModels = ["pro", "rapide", "raisonement", "3 pro", "flash"];
 
 // Gemini Cookies (provided by user, can be overridden by env)
 const DEFAULT_COOKIES = [
@@ -43,22 +43,26 @@ const DEFAULT_COOKIES = [
 
 const GEMINI_COOKIE_STR = process.env.GEMINI_COOKIES || DEFAULT_COOKIES.map(c => `${c.name}=${c.value}`).join('; ');
 
-async function getGeminiToken() {
+async function getGeminiSession() {
     try {
         const response = await axios.get('https://gemini.google.com/app', {
             headers: { 'Cookie': GEMINI_COOKIE_STR }
         });
-        const match = response.data.match(/"SNlM0e":"([^"]+)"/);
-        return match ? match[1] : null;
+        const snMatch = response.data.match(/"SNlM0e":"([^"]+)"/);
+        const blMatch = response.data.match(/"bl":"([^"]+)"/);
+        return {
+            atToken: snMatch ? snMatch[1] : null,
+            buildLabel: blMatch ? blMatch[1] : "boq_assistant-bard-web-server_20240201.09_p0"
+        };
     } catch (e) {
-        console.error("Failed to get Gemini token:", e.message);
+        console.error("Failed to get Gemini session:", e.message);
         return null;
     }
 }
 
 async function askGemini(query, uid, modelName, systemPrompt) {
-    const atToken = await getGeminiToken();
-    if (!atToken) throw new Error("Could not initialize Gemini session.");
+    const session = await getGeminiSession();
+    if (!session || !session.atToken) throw new Error("Could not initialize Gemini session.");
 
     let state = geminiConversations.get(uid) || { conversationId: "", responseId: "", choiceId: "" };
     const reqId = Math.floor(Math.random() * 900000) + 100000;
@@ -69,9 +73,10 @@ async function askGemini(query, uid, modelName, systemPrompt) {
         refinedQuery = `[System Instruction: ${systemPrompt}]\n\n${query}`;
     }
 
-    // Hint for model selection in unofficial API
-    if (modelName === "flash") refinedQuery = `(Using Flash mode) ${refinedQuery}`;
-    else if (modelName === "raisonement") refinedQuery = `(Using Reasoning mode) ${refinedQuery}`;
+    // Mapping based on screenshot: Rapide, Raisonnement, Pro
+    if (modelName === "rapide" || modelName === "flash") refinedQuery = `(Mode: Rapide) ${refinedQuery}`;
+    else if (modelName === "raisonement") refinedQuery = `(Mode: Raisonnement) ${refinedQuery}`;
+    else if (modelName === "pro" || modelName === "3 pro") refinedQuery = `(Mode: Pro) ${refinedQuery}`;
 
     const fReq = [
         null,
@@ -83,17 +88,37 @@ async function askGemini(query, uid, modelName, systemPrompt) {
         ])
     ];
 
-    const response = await axios.post(
-        `https://gemini.google.com/_/BardChatUi/data/assistant.lamda.BardFrontendService/GetAnswer?bl=boq_assistant-bard-web-server_20240201.09_p0&_reqid=${reqId}&rt=c`,
-        `f.req=${encodeURIComponent(JSON.stringify(fReq))}&at=${atToken}`,
-        {
-            headers: {
-                'Cookie': GEMINI_COOKIE_STR,
-                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-                'Referer': 'https://gemini.google.com/app',
-            }
+    // Try multiple endpoints if one fails
+    const endpoints = [
+        `https://gemini.google.com/_/BardChatUi/data/assistant.lamda.BardFrontendService/GetAnswer?bl=${session.buildLabel}&_reqid=${reqId}&rt=c`,
+        `https://gemini.google.com/_/BardChatUi/data/assistant.lamda.BardFrontendService/GetAnswer?_reqid=${reqId}&rt=c`
+    ];
+
+    let response;
+    let lastError;
+
+    for (const url of endpoints) {
+        try {
+            response = await axios.post(
+                url,
+                `f.req=${encodeURIComponent(JSON.stringify(fReq))}&at=${session.atToken}`,
+                {
+                    headers: {
+                        'Cookie': GEMINI_COOKIE_STR,
+                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                        'Referer': 'https://gemini.google.com/app',
+                    }
+                }
+            );
+            if (response.status === 200) break;
+        } catch (e) {
+            lastError = e;
+            if (e.response && e.response.status === 404) continue;
+            throw e;
         }
-    );
+    }
+
+    if (!response || response.status !== 200) throw lastError || new Error("Failed to connect to Gemini API");
 
     const lines = response.data.split('\n');
     let responseText = "";
@@ -134,7 +159,8 @@ app.get('/api/openai', async (req, res) => {
         });
     }
 
-    if (geminiModels.includes(model.toLowerCase()) || model.toLowerCase().includes('gemini')) {
+    const modelLower = model.toLowerCase();
+    if (geminiModels.includes(modelLower) || modelLower.includes('gemini')) {
         return handleGemini(req, res);
     }
 
@@ -207,10 +233,11 @@ async function handleGemini(req, res) {
     const modelLower = model.toLowerCase();
 
     const tryModels = [];
-    if (modelLower === "3 pro") tryModels.push("3 pro", "flash", "raisonement");
-    else if (modelLower === "flash") tryModels.push("flash", "3 pro", "raisonement");
-    else if (modelLower === "raisonement") tryModels.push("raisonement", "3 pro", "flash");
-    else tryModels.push("3 pro", "flash", "raisonement");
+    // User requested order based on screenshot: Rapide, Raisonnement, Pro
+    if (modelLower === "pro" || modelLower === "3 pro") tryModels.push("pro", "rapide", "raisonement");
+    else if (modelLower === "rapide" || modelLower === "flash") tryModels.push("rapide", "pro", "raisonement");
+    else if (modelLower === "raisonement") tryModels.push("raisonement", "pro", "rapide");
+    else tryModels.push("pro", "rapide", "raisonement");
 
     let lastError = null;
     for (const m of tryModels) {
