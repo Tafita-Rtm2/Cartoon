@@ -5,146 +5,233 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Enable CORS for your HTML/Iframe usage
 app.use(cors());
 app.use(express.json());
 
 // Store conversations in memory
 const conversations = new Map();
+const geminiConversations = new Map();
 
-// Define models based on your code
-const modelsData = [
-  "gpt-5",
-  "gpt-5(Azure)"
+// Models
+const gptModels = ["gpt-5", "gpt-5(Azure)"];
+const geminiModels = ["3 pro", "flash", "raisonement"];
+
+// Gemini Cookies (provided by user, can be overridden by env)
+const DEFAULT_COOKIES = [
+    {"name": "SAPISID", "value": "ekVoYAwTWVJasyry/AC_mmhY8O_i_CJ9Xf"},
+    {"name": "__Secure-3PAPISID", "value": "ekVoYAwTWVJasyry/AC_mmhY8O_i_CJ9Xf"},
+    {"name": "_gcl_au", "value": "1.1.219111874.1769454158"},
+    {"name": "AEC", "value": "AaJma5vqiVU2onYyz5ssWpGcbxNCIK1KOK1Yui8emmTkNoaJgFO1q0AIlyc"},
+    {"name": "_ga_WC57KJ50ZZ", "value": "GS2.1.s1769831526$o2$g0$t1769831535$j51$l0$h0"},
+    {"name": "NID", "value": "528=WamHUpHd4nN1qKPESrmJYGWf9M3AJdwRqbL-PTY1QEDHR1utnkQG_rAq98KV53OM66WpLtRfWEe0hqNxNSJ_53YdXADrynDZU61HAWxdLFwYilzH_zRs4g0fDY4PQ77gPwJtx3R7dRYNlr9cSTpWU55rHKYZhlFc6F7IQc3QjZIVtRxgr8GTl8xQ1XYWZCf4NSP96ggHNawf5qmu7SpxNoabEbz2GhnXpqhUMK5xCy0xOxMh-YgoxXNRxuaARJ5QBCxaxCPs6iHnszLGhEayGZNJcEOaTZrdaalKR6qCrqP9kcxPorGH46BsxVqbe8ncVsuE5SLE2mH0l9GCHuhSILBV8_91iMJUsTGkbdLMrV7QmtcF6NJEkq9YgqdcoIYGAGG7vDOkRV6gxIR795Fd2n0WN-WOUW6wtu8ks9ruc2cxSIsXLpfosP-Rc5dlZDDA6uQkL0OPSEvbYf4WnfvX55p4iH-IsQDB1uo25s6Czge9gLbtQXy9PCJ32hFqM95ZWrIqumCmzN4eHzOwCbTlYYhe1ecro2ach6nBG00mYCoaYj8iey0njILe0By1WEjvX7JPUGOuLtKXQZ2QHJ5oFc9V2Wc3XSZKT01SbeI_ZoIECLtDNUCpsvvqj3g9XqL8N8sRkLOG2u4Nwubb4yQ3r1W2k2Z7Bhrf4O-RSljO8z_dSNTy0Eb29zq3fSfnM7vdOOptlyD3qHI472nW-6pl3bG_-8-K6VLD7hAAefXeT3SeUQ"},
+    {"name": "APISID", "value": "_654tlSVvpyHeE18/ArcQGnCoZ42AV9AE6"},
+    {"name": "COMPASS", "value": "gemini-pd=CjwACWuJV93jFYb_b6k1ZbZc5AVi75OXfwVJx6huPFdJgLZgT-iphNSBtyIyTho-2Gurv4U86El7hPmdVFUQ6Jv7ywYaXQAJa4lXgICPRxTCq4WUfmrdWMST4kGs1GRj2AOMTWxzvxGleIpkW4NjMsxRVlRb-TWlRXTaFxWOpfa_RUOOJQM7L12N_u8TbQU5QCMsf3Ue0syU-exWd48W_xCqBCABMAE"},
+    {"name": "__Secure-1PAPISID", "value": "ekVoYAwTWVJasyry/AC_mmhY8O_i_CJ9Xf"},
+    {"name": "__Secure-3PSID", "value": "g.a0006Aj8jDhx9DwPknH88r5NhjlHoHFkAgK_1f-qrbdFv6e3Xk8bW8Te9gY6q1wp9Rw5-xcqigACgYKAS4SARUSFQHGX2MiYLg-Q9E1v5qoNvH4Z1oVWhoVAUF8yKp7PeVdZO2Il0BrOMuRIUDw0076"},
+    {"name": "__Secure-1PSID", "value": "g.a0006Aj8jDhx9DwPknH88r5NhjlHoHFkAgK_1f-qrbdFv6e3Xk8bi1Q34Ox6-M9eWTQokjCvdAACgYKASkSARUSFQHGX2MiGVMhk66jaP5z2lbLDGoLnBoVAUF8yKqqX6whDGiYzScdHB-GgCF50076"},
+    {"name": "__Secure-1PSIDCC", "value": "AKEyXzU6XJ_R0aVMjWbEmuf7PwDM4hi_KtWbWh7nef4hHddKjSWYoGOlj4StV5JO8FgEnVQlJg"},
+    {"name": "__Secure-3PSIDCC", "value": "AKEyXzWbQP1DqImZSfGnqISu7vyCLVKh4A-UpqriAJ8ZlEpWyLMCUY4xyBTyeaxbv0lKBsJS_g"},
+    {"name": "__Secure-BUCKET", "value": "CEI"},
+    {"name": "_ga", "value": "GA1.1.221275717.1769454160"},
+    {"name": "_ga_BF8Q35BMLM", "value": "GS2.1.s1769831527$o2$g0$t1769831534$j53$l0$h0"},
+    {"name": "HSID", "value": "A-5Vch2LzEVcONvuJ"},
+    {"name": "SEARCH_SAMESITE", "value": "CgQI_58B"},
+    {"name": "SID", "value": "g.a0006Aj8jDhx9DwPknH88r5NhjlHoHFkAgK_1f-qrbdFv6e3Xk8bnZkd3Ua4g6vhEZUUjOKupAACgYKAXISARUSFQHGX2MiishkltPPnlcpDZL3ozXgnxoVAUF8yKrCq-JECfM5ySHUAFHJFZs20076"},
+    {"name": "SIDCC", "value": "AKEyXzVSFEMK4fjmn51qGvHdq1TX_7LNeiJeurv_2i08BUAOit9YJIdRIiKkegeTSJ1a3Q7H"},
+    {"name": "SSID", "value": "AwEZUJ7YUUKjE72a1"}
 ];
 
-app.get('/api/openai', async (req, res) => {
-  // Map 'roleplay' to 'system' variable
-  const { query, uid, model, roleplay, imgurl } = req.query;
+const GEMINI_COOKIE_STR = process.env.GEMINI_COOKIES || DEFAULT_COOKIES.map(c => `${c.name}=${c.value}`).join('; ');
 
-  // Validate required fields
-  if (!query || !uid || !model) {
-    return res.status(400).json({
-      status: false,
-      error: "Please provide 'query', 'uid', and 'model'.",
-      available_models: {
-        chat: modelsData
-      }
-    });
-  }
+async function getGeminiToken() {
+    try {
+        const response = await axios.get('https://gemini.google.com/app', {
+            headers: { 'Cookie': GEMINI_COOKIE_STR }
+        });
+        const match = response.data.match(/"SNlM0e":"([^"]+)"/);
+        return match ? match[1] : null;
+    } catch (e) {
+        console.error("Failed to get Gemini token:", e.message);
+        return null;
+    }
+}
 
-  try {
-    // Handle Conversation History
-    let messages = conversations.get(uid) || [];
+async function askGemini(query, uid, modelName, systemPrompt) {
+    const atToken = await getGeminiToken();
+    if (!atToken) throw new Error("Could not initialize Gemini session.");
+
+    let state = geminiConversations.get(uid) || { conversationId: "", responseId: "", choiceId: "" };
+    const reqId = Math.floor(Math.random() * 900000) + 100000;
     
-    // Add Roleplay (System message) if provided and it's the start of a chat
-    // Or if you want to inject it dynamically. 
-    // Logic: If roleplay exists and not already set, we add it.
-    if (roleplay && messages.length === 0) {
-      messages.push({ role: 'system', content: roleplay });
+    // Inject system prompt for Gemini
+    let refinedQuery = query;
+    if (systemPrompt) {
+        refinedQuery = `[System Instruction: ${systemPrompt}]\n\n${query}`;
     }
 
-    // Construct User Message
-    const userMessage = {
-      role: 'user',
-      content: query
-    };
+    // Hint for model selection in unofficial API
+    if (modelName === "flash") refinedQuery = `(Using Flash mode) ${refinedQuery}`;
+    else if (modelName === "raisonement") refinedQuery = `(Using Reasoning mode) ${refinedQuery}`;
 
-    if (imgurl) {
-      userMessage.content = [
-        { type: 'text', text: query },
-        { type: 'image_url', image_url: { url: imgurl } }
-      ];
-    }
+    const fReq = [
+        null,
+        JSON.stringify([
+            [refinedQuery, 0, null, null, null, null, []],
+            ["en"],
+            [state.conversationId, state.responseId, state.choiceId, null, null, []],
+            null, null, null, [1], 0, [], [], 1, 0
+        ])
+    ];
 
-    messages.push(userMessage);
-
-    // Call the External API
-    const response = await axios.post('https://gpt.tiptopuni.com/api/openai/v1/chat/completions',
-      {
-        model: model,
-        messages: messages,
-        stream: true,
-        temperature: 0.5,
-        presence_penalty: 0,
-        frequency_penalty: 0,
-        top_p: 1
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-          "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
-          "sec-ch-ua": "\"Chromium\";v=\"137\", \"Not/A)Brand\";v=\"24\"",
-          "sec-ch-ua-arch": "\"\"",
-          "sec-ch-ua-bitness": "\"\"",
-          "sec-ch-ua-full-version": "\"137.0.7337.0\"",
-          "sec-ch-ua-full-version-list": "\"Chromium\";v=\"137.0.7337.0\", \"Not/A)Brand\";v=\"24.0.0.0\"",
-          "sec-ch-ua-mobile": "?1",
-          "sec-ch-ua-model": "\"SM-A057F\"",
-          "sec-ch-ua-platform": "\"Android\"",
-          "sec-ch-ua-platform-version": "\"15.0.0\"",
-          "Referer": "https://gpt.tiptopuni.com/"
-        },
-        responseType: 'stream'
-      }
+    const response = await axios.post(
+        `https://gemini.google.com/_/BardChatUi/data/assistant.lamda.BardFrontendService/GetAnswer?bl=boq_assistant-bard-web-server_20240201.09_p0&_reqid=${reqId}&rt=c`,
+        `f.req=${encodeURIComponent(JSON.stringify(fReq))}&at=${atToken}`,
+        {
+            headers: {
+                'Cookie': GEMINI_COOKIE_STR,
+                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                'Referer': 'https://gemini.google.com/app',
+            }
+        }
     );
 
-    let fullResponse = '';
+    const lines = response.data.split('\n');
+    let responseText = "";
+    for (const line of lines) {
+        if (line.includes("w_f.v")) {
+            try {
+                const data = JSON.parse(JSON.parse(line.split(',')[2])[0][2]);
+                responseText = data[4][0][1][0];
+                state.conversationId = data[1][0];
+                state.responseId = data[1][1];
+                state.choiceId = data[4][0][0];
+                geminiConversations.set(uid, state);
+                break;
+            } catch (e) {}
+        }
+    }
 
-    // Process the stream
-    response.data.on('data', chunk => {
-      const lines = chunk.toString().split('\n').filter(line => line.trim());
+    if (!responseText) {
+        const match = response.data.match(/\["([^"]+)",0,null,null,null,null,\[\]\]/);
+        if (match) responseText = match[1];
+    }
 
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6);
-          if (data === '[DONE]') return;
+    if (!responseText) throw new Error("Empty response from Gemini.");
+    return responseText;
+}
 
-          try {
-            const parsed = JSON.parse(data);
-            const content = parsed.choices[0]?.delta?.content;
-            if (content) {
-              fullResponse += content;
+// --- API Endpoints ---
+
+app.get('/api/openai', async (req, res) => {
+    const { query, uid, model, roleplay, system, imgurl } = req.query;
+    const systemPrompt = roleplay || system;
+
+    if (!query || !uid || !model) {
+        return res.status(400).json({
+            status: false,
+            error: "Please provide 'query', 'uid', and 'model'.",
+            available_models: { gpt: gptModels, gemini: geminiModels }
+        });
+    }
+
+    if (geminiModels.includes(model.toLowerCase()) || model.toLowerCase().includes('gemini')) {
+        return handleGemini(req, res);
+    }
+
+    try {
+        let messages = conversations.get(uid) || [];
+        if (systemPrompt) {
+            const systemIndex = messages.findIndex(m => m.role === 'system');
+            if (systemIndex !== -1) messages[systemIndex].content = systemPrompt;
+            else messages.unshift({ role: 'system', content: systemPrompt });
+        }
+
+        const userMessage = { role: 'user', content: query };
+        if (imgurl) {
+            userMessage.content = [
+                { type: 'text', text: query },
+                { type: 'image_url', image_url: { url: imgurl } }
+            ];
+        }
+        messages.push(userMessage);
+
+        const response = await axios.post('https://gpt.tiptopuni.com/api/openai/v1/chat/completions',
+            { model, messages, stream: true, temperature: 0.5 },
+            {
+                headers: { "Content-Type": "application/json", "Referer": "https://gpt.tiptopuni.com/" },
+                responseType: 'stream'
             }
-          } catch (e) {
-            // Ignore parsing errors for partial chunks
-          }
-        }
-      }
-    });
+        );
 
-    // When stream ends, send the formatted JSON
-    response.data.on('end', () => {
-      // Save assistant response to history
-      messages.push({ role: 'assistant', content: fullResponse });
-      conversations.set(uid, messages);
+        let fullResponse = '';
+        response.data.on('data', chunk => {
+            const lines = chunk.toString().split('\n').filter(line => line.trim());
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const data = line.slice(6);
+                    if (data === '[DONE]') return;
+                    try {
+                        const parsed = JSON.parse(data);
+                        const content = parsed.choices[0]?.delta?.content;
+                        if (content) fullResponse += content;
+                    } catch (e) {}
+                }
+            }
+        });
 
-      // Send the specific JSON format you requested
-      res.json({
-        status: true,
-        maintainer: "rz (jimmxzz)",
-        response: fullResponse,
-        model_type: "chat",
-        available_models: {
-          chat: modelsData
-        }
-      });
-    });
+        response.data.on('end', () => {
+            messages.push({ role: 'assistant', content: fullResponse });
+            conversations.set(uid, messages);
+            res.json({
+                status: true,
+                maintainer: "rz (jimmxzz)",
+                response: fullResponse,
+                result: fullResponse,
+                model_type: "gpt",
+                available_models: { gpt: gptModels, gemini: geminiModels }
+            });
+        });
 
-  } catch (error) {
-    console.error("API Error:", error.message);
-    res.status(500).json({
-      status: false,
-      error: error.message,
-      maintainer: "rz (jimmxzz)",
-      available_models: {
-        chat: modelsData
-      }
-    });
-  }
+        response.data.on('error', (err) => {
+            console.error("GPT Stream error:", err.message);
+            if (!res.headersSent) res.status(500).json({ status: false, error: "Stream error" });
+        });
+    } catch (error) {
+        if (!res.headersSent) res.status(500).json({ status: false, error: error.message });
+    }
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+async function handleGemini(req, res) {
+    const { query, uid, model, roleplay, system } = req.query;
+    const systemPrompt = roleplay || system;
+    const modelLower = model.toLowerCase();
+
+    const tryModels = [];
+    if (modelLower === "3 pro") tryModels.push("3 pro", "flash", "raisonement");
+    else if (modelLower === "flash") tryModels.push("flash", "3 pro", "raisonement");
+    else if (modelLower === "raisonement") tryModels.push("raisonement", "3 pro", "flash");
+    else tryModels.push("3 pro", "flash", "raisonement");
+
+    let lastError = null;
+    for (const m of tryModels) {
+        try {
+            const responseText = await askGemini(query, uid, m, systemPrompt);
+            return res.json({
+                status: true,
+                maintainer: "rz (jimmxzz)",
+                response: responseText,
+                result: responseText,
+                model_type: "gemini",
+                model_used: m,
+                available_models: { gpt: gptModels, gemini: geminiModels }
+            });
+        } catch (error) {
+            console.error(`Gemini ${m} failed:`, error.message);
+            lastError = error;
+        }
+    }
+
+    res.status(500).json({ status: false, error: lastError ? lastError.message : "Gemini failed" });
+}
+
+app.listen(port, () => console.log(`Server is running on port ${port}`));
