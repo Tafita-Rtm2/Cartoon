@@ -16,8 +16,8 @@ const geminiConversations = new Map();
 const gptModels = ["gpt-5", "gpt-5(Azure)"];
 const geminiModels = ["pro", "rapide", "raisonement", "3 pro", "flash"];
 
-// Gemini Cookies (provided by user, can be overridden by env)
-const DEFAULT_COOKIES = [
+// Gemini Session Cookies (User Provided)
+const userSessionCookies = [
     {"name": "SAPISID", "value": "ekVoYAwTWVJasyry/AC_mmhY8O_i_CJ9Xf"},
     {"name": "__Secure-3PAPISID", "value": "ekVoYAwTWVJasyry/AC_mmhY8O_i_CJ9Xf"},
     {"name": "_gcl_au", "value": "1.1.219111874.1769454158"},
@@ -41,18 +41,31 @@ const DEFAULT_COOKIES = [
     {"name": "SSID", "value": "AwEZUJ7YUUKjE72a1"}
 ];
 
-const GEMINI_COOKIE_STR = process.env.GEMINI_COOKIES || DEFAULT_COOKIES.map(c => `${c.name}=${c.value}`).join('; ');
+const GEMINI_COOKIE_STR = process.env.GEMINI_COOKIES || userSessionCookies.map(c => `${c.name}=${c.value}`).join('; ');
+
+const BROWSER_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Accept': '*/*',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Origin': 'https://gemini.google.com',
+    'Referer': 'https://gemini.google.com/app',
+    'x-same-domain': '1',
+    'x-goog-authuser': '0'
+};
 
 async function getGeminiSession() {
     try {
         const response = await axios.get('https://gemini.google.com/app', {
-            headers: { 'Cookie': GEMINI_COOKIE_STR }
+            headers: {
+                'Cookie': GEMINI_COOKIE_STR,
+                ...BROWSER_HEADERS
+            }
         });
         const snMatch = response.data.match(/"SNlM0e":"([^"]+)"/);
         const blMatch = response.data.match(/"bl":"([^"]+)"/);
         return {
             atToken: snMatch ? snMatch[1] : null,
-            buildLabel: blMatch ? blMatch[1] : "boq_assistant-bard-web-server_20240201.09_p0"
+            buildLabel: blMatch ? blMatch[1] : "boq_assistant-bard-web-server_20240501.01_p0"
         };
     } catch (e) {
         console.error("Failed to get Gemini session:", e.message);
@@ -62,87 +75,79 @@ async function getGeminiSession() {
 
 async function askGemini(query, uid, modelName, systemPrompt) {
     const session = await getGeminiSession();
-    if (!session || !session.atToken) throw new Error("Could not initialize Gemini session.");
+    if (!session || !session.atToken) throw new Error("Could not initialize Gemini session. Verify cookies.");
 
     let state = geminiConversations.get(uid) || { conversationId: "", responseId: "", choiceId: "" };
-    const reqId = Math.floor(Math.random() * 900000) + 100000;
-    
-    // Inject system prompt for Gemini
+
     let refinedQuery = query;
     if (systemPrompt) {
         refinedQuery = `[System Instruction: ${systemPrompt}]\n\n${query}`;
     }
 
-    // Mapping based on screenshot: Rapide, Raisonnement, Pro
-    if (modelName === "rapide" || modelName === "flash") refinedQuery = `(Mode: Rapide) ${refinedQuery}`;
-    else if (modelName === "raisonement") refinedQuery = `(Mode: Raisonnement) ${refinedQuery}`;
-    else if (modelName === "pro" || modelName === "3 pro") refinedQuery = `(Mode: Pro) ${refinedQuery}`;
+    // Hint for the model
+    if (modelName === "rapide" || modelName === "flash") refinedQuery = `(Using Rapide mode) ${refinedQuery}`;
+    else if (modelName === "raisonement") refinedQuery = `(Using Raisonnement mode) ${refinedQuery}`;
+    else if (modelName === "pro" || modelName === "3 pro") refinedQuery = `(Using Pro mode) ${refinedQuery}`;
 
-    const fReq = [
+    const innerReq = [
+        refinedQuery,
+        0,
+        state.conversationId || "",
+        state.responseId || "",
+        state.choiceId || "",
         null,
-        JSON.stringify([
-            [refinedQuery, 0, null, null, null, null, []],
-            ["en"],
-            [state.conversationId, state.responseId, state.choiceId, null, null, []],
-            null, null, null, [1], 0, [], [], 1, 0
-        ])
+        []
     ];
 
-    // Try multiple endpoints if one fails
+    const fReq = [[["atunS3", JSON.stringify(innerReq), null, "generic"]]];
+    const postData = `f.req=${encodeURIComponent(JSON.stringify(fReq))}&at=${session.atToken}`;
+
+    // Try multiple endpoints to avoid 404
     const endpoints = [
-        `https://gemini.google.com/_/BardChatUi/data/assistant.lamda.BardFrontendService/GetAnswer?bl=${session.buildLabel}&_reqid=${reqId}&rt=c`,
-        `https://gemini.google.com/_/BardChatUi/data/assistant.lamda.BardFrontendService/GetAnswer?_reqid=${reqId}&rt=c`
+        `https://gemini.google.com/_/BardChatUi/data/batchexecute?rpcids=atunS3&bl=${session.buildLabel}&rt=c`,
+        `https://gemini.google.com/_/BardChatUi/data/batchexecute?rpcids=atunS3&rt=c`
     ];
 
-    let response;
     let lastError;
-
     for (const url of endpoints) {
         try {
-            response = await axios.post(
-                url,
-                `f.req=${encodeURIComponent(JSON.stringify(fReq))}&at=${session.atToken}`,
-                {
-                    headers: {
-                        'Cookie': GEMINI_COOKIE_STR,
-                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-                        'Referer': 'https://gemini.google.com/app',
-                    }
+            const response = await axios.post(url, postData, {
+                headers: {
+                    'Cookie': GEMINI_COOKIE_STR,
+                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                    ...BROWSER_HEADERS
                 }
-            );
-            if (response.status === 200) break;
+            });
+
+            const data = response.data;
+            const lines = data.split('\n');
+            let responseText = "";
+
+            for (const line of lines) {
+                if (line.includes('atunS3')) {
+                    try {
+                        const match = line.match(/\["w_f\.v",null,"atunS3","(.*)"\]/);
+                        if (match) {
+                            const jsonStr = JSON.parse(`"${match[1]}"`);
+                            const chatData = JSON.parse(jsonStr);
+                            responseText = chatData[4][0][1][0];
+                            state.conversationId = chatData[1][0];
+                            state.responseId = chatData[1][1];
+                            state.choiceId = chatData[4][0][0];
+                            geminiConversations.set(uid, state);
+                            return responseText;
+                        }
+                    } catch (e) {}
+                }
+            }
         } catch (e) {
             lastError = e;
             if (e.response && e.response.status === 404) continue;
-            throw e;
+            break;
         }
     }
 
-    if (!response || response.status !== 200) throw lastError || new Error("Failed to connect to Gemini API");
-
-    const lines = response.data.split('\n');
-    let responseText = "";
-    for (const line of lines) {
-        if (line.includes("w_f.v")) {
-            try {
-                const data = JSON.parse(JSON.parse(line.split(',')[2])[0][2]);
-                responseText = data[4][0][1][0];
-                state.conversationId = data[1][0];
-                state.responseId = data[1][1];
-                state.choiceId = data[4][0][0];
-                geminiConversations.set(uid, state);
-                break;
-            } catch (e) {}
-        }
-    }
-
-    if (!responseText) {
-        const match = response.data.match(/\["([^"]+)",0,null,null,null,null,\[\]\]/);
-        if (match) responseText = match[1];
-    }
-
-    if (!responseText) throw new Error("Empty response from Gemini.");
-    return responseText;
+    throw lastError || new Error("Failed to parse Gemini response.");
 }
 
 // --- API Endpoints ---
@@ -159,8 +164,7 @@ app.get('/api/openai', async (req, res) => {
         });
     }
 
-    const modelLower = model.toLowerCase();
-    if (geminiModels.includes(modelLower) || modelLower.includes('gemini')) {
+    if (geminiModels.includes(model.toLowerCase()) || model.toLowerCase().includes('gemini')) {
         return handleGemini(req, res);
     }
 
@@ -233,7 +237,6 @@ async function handleGemini(req, res) {
     const modelLower = model.toLowerCase();
 
     const tryModels = [];
-    // User requested order based on screenshot: Rapide, Raisonnement, Pro
     if (modelLower === "pro" || modelLower === "3 pro") tryModels.push("pro", "rapide", "raisonement");
     else if (modelLower === "rapide" || modelLower === "flash") tryModels.push("rapide", "pro", "raisonement");
     else if (modelLower === "raisonement") tryModels.push("raisonement", "pro", "rapide");
