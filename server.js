@@ -45,27 +45,47 @@ async function handleGemini(req, res) {
 
         messages.push({ role: 'user', content: query });
 
-        // If no token is provided, fallback to Hercai free API
+        // If no token is provided, fallback to Hercai free API using fetch to avoid SSL issues
         if (!PUTER_TOKEN) {
             const finalQuery = systemPrompt ? `${systemPrompt}\n\n${query}` : query;
-            const response = await axios.get(`https://api.hercai.onrender.com/v3/hercai?question=${encodeURIComponent(finalQuery)}`, {
-                timeout: 30000
-            });
+            try {
+                const response = await fetch(`https://api.hercai.onrender.com/v3/hercai?question=${encodeURIComponent(finalQuery)}`);
+                const data = await response.json();
 
-            if (response.data && response.data.reply) {
-                const content = response.data.reply;
-                messages.push({ role: 'assistant', content: content });
-                geminiConversations.set(uid, messages);
+                if (data && data.reply) {
+                    const content = data.reply;
+                    messages.push({ role: 'assistant', content: content });
+                    geminiConversations.set(uid, messages);
 
-                return res.json({
-                    status: true,
-                    maintainer: "rz (jimmxzz)",
-                    response: content,
-                    result: content,
-                    model_type: "gemini",
-                    model_used: "hercai-free",
-                    available_models: { gpt: gptModels, gemini: geminiModels }
-                });
+                    return res.json({
+                        status: true,
+                        maintainer: "rz (jimmxzz)",
+                        response: content,
+                        result: content,
+                        model_type: "gemini",
+                        model_used: "hercai-free",
+                        available_models: { gpt: gptModels, gemini: geminiModels }
+                    });
+                }
+            } catch (fetchError) {
+                console.error("Hercai fetch error, trying axios fallback...", fetchError.message);
+                // Fallback to sandipbaruwal API if Hercai fails
+                const sandipRes = await axios.get(`https://sandipbaruwal.onrender.com/gemini?prompt=${encodeURIComponent(finalQuery)}`, { timeout: 20000 });
+                if (sandipRes.data && sandipRes.data.answer) {
+                    const content = sandipRes.data.answer;
+                    messages.push({ role: 'assistant', content: content });
+                    geminiConversations.set(uid, messages);
+                    return res.json({
+                        status: true,
+                        maintainer: "rz (jimmxzz)",
+                        response: content,
+                        result: content,
+                        model_type: "gemini",
+                        model_used: "sandip-free",
+                        available_models: { gpt: gptModels, gemini: geminiModels }
+                    });
+                }
+                throw fetchError;
             }
         }
 
