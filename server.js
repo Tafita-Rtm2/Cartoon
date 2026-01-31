@@ -44,7 +44,7 @@ const userSessionCookies = [
 const GEMINI_COOKIE_STR = process.env.GEMINI_COOKIES || userSessionCookies.map(c => `${c.name}=${c.value}`).join('; ');
 
 const BROWSER_HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
     'Accept': '*/*',
     'Accept-Language': 'en-US,en;q=0.9',
     'Origin': 'https://gemini.google.com',
@@ -61,10 +61,21 @@ async function getGeminiSession() {
                 ...BROWSER_HEADERS
             }
         });
-        const snMatch = response.data.match(/"SNlM0e":"([^"]+)"/);
-        const blMatch = response.data.match(/"bl":"([^"]+)"/);
+        const html = response.data;
+        // Search for AT token in multiple patterns
+        let atToken = null;
+        const atPatterns = [/"SNlM0e":"([^"]+)"/, /"W97gF":"([^"]+)"/, /"at":"([^"]+)"/];
+        for (const pattern of atPatterns) {
+            const match = html.match(pattern);
+            if (match) {
+                atToken = match[1];
+                break;
+            }
+        }
+
+        const blMatch = html.match(/"bl":"([^"]+)"/);
         return {
-            atToken: snMatch ? snMatch[1] : null,
+            atToken: atToken,
             buildLabel: blMatch ? blMatch[1] : "boq_assistant-bard-web-server_20240501.01_p0"
         };
     } catch (e) {
@@ -75,7 +86,7 @@ async function getGeminiSession() {
 
 async function askGemini(query, uid, modelName, systemPrompt) {
     const session = await getGeminiSession();
-    if (!session || !session.atToken) throw new Error("Session init failed. Check cookies.");
+    if (!session || !session.atToken) throw new Error("Authentication failed. Cookies might be expired.");
 
     let state = geminiConversations.get(uid) || { conversationId: "", responseId: "", choiceId: "" };
 
@@ -84,24 +95,28 @@ async function askGemini(query, uid, modelName, systemPrompt) {
         refinedQuery = `[System Instruction: ${systemPrompt}]\n\n${query}`;
     }
 
-    if (modelName === "rapide" || modelName === "flash") refinedQuery = `(Rapide) ${refinedQuery}`;
-    else if (modelName === "raisonement") refinedQuery = `(Raisonnement) ${refinedQuery}`;
-    else if (modelName === "pro" || modelName === "3 pro") refinedQuery = `(Pro) ${refinedQuery}`;
+    if (modelName === "rapide" || modelName === "flash") refinedQuery = `(Using Gemini Rapide) ${refinedQuery}`;
+    else if (modelName === "raisonement") refinedQuery = `(Using Gemini Raisonnement) ${refinedQuery}`;
+    else if (modelName === "pro" || modelName === "3 pro") refinedQuery = `(Using Gemini Pro) ${refinedQuery}`;
 
-    // Standard Gemini payload
+    // Structure used by modern batchexecute
     const payload = [
         [refinedQuery, 0, null, null, null, null, []],
-        ["en-US"],
+        ["en"],
         [state.conversationId || "", state.responseId || "", state.choiceId || "", null, null, []],
         null, null, null, [1], 0, [], [], 1, 0
     ];
 
-    // Try different RPCIDs if 400 persists
-    const rpcids = ["atunS3", "sh9Sbc"];
+    const rpcids = ["atunS3", "sh9Sbc", "H8S3v"];
     let lastError;
 
     for (const rpcid of rpcids) {
-        const fReq = [[ [rpcid, JSON.stringify(payload), null, "generic"] ]];
+        const fReq = [
+            [
+                [rpcid, JSON.stringify(payload), null, "1"]
+            ]
+        ];
+
         const params = new URLSearchParams();
         params.append('f.req', JSON.stringify(fReq));
         params.append('at', session.atToken);
@@ -114,44 +129,60 @@ async function askGemini(query, uid, modelName, systemPrompt) {
                     'Cookie': GEMINI_COOKIE_STR,
                     'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
                     ...BROWSER_HEADERS
-                }
+                },
+                timeout: 30000
             });
 
             const data = response.data;
-            const lines = data.split('\n');
-            for (const line of lines) {
-                if (line.includes(rpcid)) {
-                    try {
-                        const match = line.match(/\["w_f\.v",null,".*?","(.*)"\]/);
-                        if (match) {
-                            const jsonStr = JSON.parse(`"${match[1]}"`);
-                            const chatData = JSON.parse(jsonStr);
-                            const responseText = chatData[4][0][1][0];
-                            state.conversationId = chatData[1][0];
-                            state.responseId = chatData[1][1];
-                            state.choiceId = chatData[4][0][0];
-                            geminiConversations.set(uid, state);
-                            return responseText;
-                        }
-                    } catch (e) {}
+            if (data.includes('atunS3') || data.includes('sh9Sbc') || data.includes('H8S3v')) {
+                const lines = data.split('\n');
+                for (const line of lines) {
+                    const match = line.match(/\["w_f\.v",null,".*?","(.*)"\]/);
+                    if (match) {
+                        const jsonStr = JSON.parse(`"${match[1]}"`);
+                        const chatData = JSON.parse(jsonStr);
+                        const responseText = chatData[4][0][1][0];
+                        state.conversationId = chatData[1][0];
+                        state.responseId = chatData[1][1];
+                        state.choiceId = chatData[4][0][0];
+                        geminiConversations.set(uid, state);
+                        return responseText;
+                    }
                 }
             }
-
-            // If we are here, we got a 200 but parsing failed, maybe wrong RPCID
         } catch (e) {
             lastError = e;
-            if (e.response && e.response.status === 400) {
-                console.log(`RPCID ${rpcid} failed with 400, trying next...`);
-                continue;
-            }
-            throw e;
+            if (e.response && e.response.status === 400) continue;
+            break;
         }
     }
 
+    // Final attempt with GetAnswer endpoint if batchexecute fails
+    try {
+        const getAnswerUrl = `https://gemini.google.com/_/BardChatUi/data/assistant.lamda.BardFrontendService/GetAnswer?bl=${session.buildLabel}&rt=c`;
+        const legacyPayload = [
+            null,
+            JSON.stringify([
+                [refinedQuery, 0, null, null, null, null, []],
+                ["en"],
+                [state.conversationId, state.responseId, state.choiceId, null, null, []],
+                null, null, null, [1], 0, [], [], 1, 0
+            ])
+        ];
+        const res = await axios.post(getAnswerUrl, `f.req=${encodeURIComponent(JSON.stringify(legacyPayload))}&at=${session.atToken}`, {
+            headers: { 'Cookie': GEMINI_COOKIE_STR, 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', ...BROWSER_HEADERS }
+        });
+        const match = res.data.match(/\["w_f\.v",null,".*?","(.*)"\]/);
+        if (match) {
+            const data = JSON.parse(JSON.parse(`"${match[1]}"`));
+            return data[4][0][1][0];
+        }
+    } catch (e) {}
+
     if (lastError && lastError.response) {
-        throw new Error(`Gemini API 400: ${JSON.stringify(lastError.response.data)}`);
+        throw new Error(`Gemini 400. Try updating your cookies. Response: ${JSON.stringify(lastError.response.data).substring(0, 100)}`);
     }
-    throw lastError || new Error("Gemini response parsing failed.");
+    throw lastError || new Error("Connection failed.");
 }
 
 // --- API Endpoints ---
