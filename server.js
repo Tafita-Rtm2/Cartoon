@@ -23,7 +23,7 @@ const userSessionCookies = [
     {"name": "_gcl_au", "value": "1.1.219111874.1769454158"},
     {"name": "AEC", "value": "AaJma5vqiVU2onYyz5ssWpGcbxNCIK1KOK1Yui8emmTkNoaJgFO1q0AIlyc"},
     {"name": "_ga_WC57KJ50ZZ", "value": "GS2.1.s1769831526$o2$g0$t1769831535$j51$l0$h0"},
-    {"name": "NID", "value": "528=WamHUpHd4nN1qKPESrmJYGWf9M3AJdwRqbL-PTY1QEDHR1utnkQG_rAq98KV53OM66WpLtRfWEe0hqNxNSJ_53YdXADrynDZU61HAWxdLFwYilzH_zRs4g0fDY4PQ77gPwJtx3R7dRYNlr9cSTpWU55rHKYZhlFc6F7IQc3QjZIVtRxgr8GTl8xQ1XYWZCf4NSP96ggHNawf5qmu7SpxNoabEbz2GhnXpqhUMK5xCy0xOxMh-YgoxXNRxuaARJ5QBCxaxCPs6iHnszLGhEayGZNJcEOaTZrdaalKR6qCrqP9kcxPorGH46BsxVqbe8ncVsuE5SLE2mH0l9GCHuhSILBV8_91iMJUsTGkbdLMrV7QmtcF6NJEkq9YgqdcoIYGAGG7vDOkRV6gxIR795Fd2n0WN-WOUW6wtu8ks9ruc2cxSIsXLpfosP-Rc5dlZDDA6uQkL0OPSEvbYf4WnfvX55p4iH-IsQDB1uo25s6Czge9gLbtQXy9PCJ32hFqM95WrIqumCmzN4eHzOwCbTlYYhe1ecro2ach6nBG00mYCoaYj8iey0njILe0By1WEjvX7JPUGOuLtKXQZ2QHJ5oFc9V2Wc3XSZKT01SbeI_ZoIECLtDNUCpsvvqj3g9XqL8N8sRkLOG2u4Nwubb4yQ3r1W2k2Z7Bhrf4O-RSljO8z_dSNTy0Eb29zq3fSfnM7vdOOptlyD3qHI472nW-6pl3bG_-8-K6VLD7hAAefXeT3SeUQ"},
+    {"name": "NID", "value": "528=WamHUpHd4nN1qKPESrmJYGWf9M3AJdwRqbL-PTY1QEDHR1utnkQG_rAq98KV53OM66WpLtRfWEe0hqNxNSJ_53YdXADrynDZU61HAWxdLFwYilzH_zRs4g0fDY4PQ77gPwJtx3R7dRYNlr9cSTpWU55rHKYZhlFc6F7IQc3QjZIVtRxgr8GTl8xQ1XYWZCf4NSP96ggHNawf5qmu7SpxNoabEbz2GhnXpqhUMK5xCy0xOxMh-YgoxXNRxuaARJ5QBCxaxCPs6iHnszLGhEayGZNJcEOaTZrdaalKR6qCrqP9kcxPorGH46BsxVqbe8ncVsuE5SLE2mH0l9GCHuhSILBV8_91iMJUsTGkbdLMrV7QmtcF6NJEkq9YgqdcoIYGAGG7vDOkRV6gxIR795Fd2n0WN-WOUW6wtu8ks9ruc2cxSIsXLpfosP-Rc5dlZDDA6uQkL0OPSEvbYf4WnfvX55p4iH-IsQDB1uo25s6Czge9gLbtQXy9PCJ32hFqM95ZWrIqumCmzN4eHzOwCbTlYYhe1ecro2ach6nBG00mYCoaYj8iey0njILe0By1WEjvX7JPUGOuLtKXQZ2QHJ5oFc9V2Wc3XSZKT01SbeI_ZoIECLtDNUCpsvvqj3g9XqL8N8sRkLOG2u4Nwubb4yQ3r1W2k2Z7Bhrf4O-RSljO8z_dSNTy0Eb29zq3fSfnM7vdOOptlyD3qHI472nW-6pl3bG_-8-K6VLD7hAAefXeT3SeUQ"},
     {"name": "APISID", "value": "_654tlSVvpyHeE18/ArcQGnCoZ42AV9AE6"},
     {"name": "COMPASS", "value": "gemini-pd=CjwACWuJV93jFYb_b6k1ZbZc5AVi75OXfwVJx6huPFdJgLZgT-iphNSBtyIyTho-2Gurv4U86El7hPmdVFUQ6Jv7ywYaXQAJa4lXgICPRxTCq4WUfmrdWMST4kGs1GRj2AOMTWxzvxGleIpkW4NjMsxRVlRb-TWlRXTaFxWOpfa_RUOOJQM7L12N_u8TbQU5QCMsf3Ue0syU-exWd48W_xCqBCABMAE"},
     {"name": "__Secure-1PAPISID", "value": "ekVoYAwTWVJasyry/AC_mmhY8O_i_CJ9Xf"},
@@ -44,7 +44,7 @@ const userSessionCookies = [
 const GEMINI_COOKIE_STR = process.env.GEMINI_COOKIES || userSessionCookies.map(c => `${c.name}=${c.value}`).join('; ');
 
 const BROWSER_HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
     'Accept': '*/*',
     'Accept-Language': 'en-US,en;q=0.9',
     'Origin': 'https://gemini.google.com',
@@ -63,9 +63,6 @@ async function getGeminiSession() {
         });
         const snMatch = response.data.match(/"SNlM0e":"([^"]+)"/);
         const blMatch = response.data.match(/"bl":"([^"]+)"/);
-        if (!snMatch) {
-             console.log("Could not find SNlM0e in page source. Length of source:", response.data.length);
-        }
         return {
             atToken: snMatch ? snMatch[1] : null,
             buildLabel: blMatch ? blMatch[1] : "boq_assistant-bard-web-server_20240501.01_p0"
@@ -78,7 +75,7 @@ async function getGeminiSession() {
 
 async function askGemini(query, uid, modelName, systemPrompt) {
     const session = await getGeminiSession();
-    if (!session || !session.atToken) throw new Error("Session init failed. SNlM0e token not found.");
+    if (!session || !session.atToken) throw new Error("Session init failed. Check cookies.");
 
     let state = geminiConversations.get(uid) || { conversationId: "", responseId: "", choiceId: "" };
 
@@ -91,68 +88,70 @@ async function askGemini(query, uid, modelName, systemPrompt) {
     else if (modelName === "raisonement") refinedQuery = `(Raisonnement) ${refinedQuery}`;
     else if (modelName === "pro" || modelName === "3 pro") refinedQuery = `(Pro) ${refinedQuery}`;
 
+    // Standard Gemini payload
     const payload = [
         [refinedQuery, 0, null, null, null, null, []],
-        ["en"],
-        [state.conversationId || null, state.responseId || null, state.choiceId || null, null, null, []],
+        ["en-US"],
+        [state.conversationId || "", state.responseId || "", state.choiceId || "", null, null, []],
         null, null, null, [1], 0, [], [], 1, 0
     ];
 
-    const fReq = [[["atunS3", JSON.stringify(payload), null, "generic"]]];
-    const postData = `f.req=${encodeURIComponent(JSON.stringify(fReq))}&at=${session.atToken}`;
+    // Try different RPCIDs if 400 persists
+    const rpcids = ["atunS3", "sh9Sbc"];
+    let lastError;
 
-    const url = `https://gemini.google.com/_/BardChatUi/data/batchexecute?rpcids=atunS3&bl=${session.buildLabel}&rt=c`;
+    for (const rpcid of rpcids) {
+        const fReq = [[ [rpcid, JSON.stringify(payload), null, "generic"] ]];
+        const params = new URLSearchParams();
+        params.append('f.req', JSON.stringify(fReq));
+        params.append('at', session.atToken);
 
-    try {
-        const response = await axios.post(url, postData, {
-            headers: {
-                'Cookie': GEMINI_COOKIE_STR,
-                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-                ...BROWSER_HEADERS
+        const url = `https://gemini.google.com/_/BardChatUi/data/batchexecute?rpcids=${rpcid}&bl=${session.buildLabel}&rt=c`;
+
+        try {
+            const response = await axios.post(url, params.toString(), {
+                headers: {
+                    'Cookie': GEMINI_COOKIE_STR,
+                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                    ...BROWSER_HEADERS
+                }
+            });
+
+            const data = response.data;
+            const lines = data.split('\n');
+            for (const line of lines) {
+                if (line.includes(rpcid)) {
+                    try {
+                        const match = line.match(/\["w_f\.v",null,".*?","(.*)"\]/);
+                        if (match) {
+                            const jsonStr = JSON.parse(`"${match[1]}"`);
+                            const chatData = JSON.parse(jsonStr);
+                            const responseText = chatData[4][0][1][0];
+                            state.conversationId = chatData[1][0];
+                            state.responseId = chatData[1][1];
+                            state.choiceId = chatData[4][0][0];
+                            geminiConversations.set(uid, state);
+                            return responseText;
+                        }
+                    } catch (e) {}
+                }
             }
-        });
 
-        const data = response.data;
-        const lines = data.split('\n');
-        let responseText = "";
-
-        for (const line of lines) {
-            if (line.includes('atunS3')) {
-                try {
-                    const match = line.match(/\["w_f\.v",null,"atunS3","(.*)"\]/);
-                    if (match) {
-                        const jsonStr = JSON.parse(`"${match[1]}"`);
-                        const chatData = JSON.parse(jsonStr);
-                        responseText = chatData[4][0][1][0];
-                        state.conversationId = chatData[1][0];
-                        state.responseId = chatData[1][1];
-                        state.choiceId = chatData[4][0][0];
-                        geminiConversations.set(uid, state);
-                        return responseText;
-                    }
-                } catch (e) {}
+            // If we are here, we got a 200 but parsing failed, maybe wrong RPCID
+        } catch (e) {
+            lastError = e;
+            if (e.response && e.response.status === 400) {
+                console.log(`RPCID ${rpcid} failed with 400, trying next...`);
+                continue;
             }
+            throw e;
         }
-
-        if (data.includes('atunS3')) {
-             const match = data.match(/\["atunS3","(.*?)",null,"generic"\]/);
-             if (match) {
-                 try {
-                     const jsonStr = JSON.parse(`"${match[1]}"`);
-                     const chatData = JSON.parse(jsonStr);
-                     responseText = chatData[4][0][1][0];
-                     return responseText;
-                 } catch (e) {}
-             }
-        }
-
-        throw new Error("Parsing failed. Data starts with: " + data.substring(0, 50));
-    } catch (e) {
-        if (e.response) {
-            throw new Error(`API ${e.response.status}: ${JSON.stringify(e.response.data)}`);
-        }
-        throw e;
     }
+
+    if (lastError && lastError.response) {
+        throw new Error(`Gemini API 400: ${JSON.stringify(lastError.response.data)}`);
+    }
+    throw lastError || new Error("Gemini response parsing failed.");
 }
 
 // --- API Endpoints ---
